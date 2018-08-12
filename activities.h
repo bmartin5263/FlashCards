@@ -224,6 +224,10 @@ public:
         NORMAL, ABORTED
     };
 
+    enum class Results {
+        RIGHT, WRONG, PENDING
+    };
+
     DeckQuiz(Deck* deck);
     DeckQuiz(const DeckQuiz&) = delete;
     DeckQuiz operator = (const DeckQuiz&) = delete;
@@ -236,6 +240,15 @@ private:
     void handleInput(int input);
     void updateButtonStates();
     void moveButtonPointer(int movement);
+    void updateDeckMeter();
+    void startGivingInput();
+    void stopGivingInput();
+    void modifyField(int input);
+    void shuffleDeck();
+    void swap(Card** a, Card** b);
+    void answer();
+    void nextCard();
+    void prevCard();
 
     Card** quizDeck;
     UI* ui;
@@ -245,7 +258,11 @@ private:
     Colors backColor;
     int buttonPointer;
     int cardIndex;
+    int nextCardToAnswer;
+    int deckSize;
+    int inputLength;
     char inputField[INPUT_FIELD_LENGTH + 1] = {0};
+    Results* quizResults;
     bool givingInput;
     bool isFront;
     bool running;

@@ -2,6 +2,7 @@
 #include <assert.h>
 #include "activities.h"
 #include "app.h"
+#include <stdlib.h>
 
 
 App::App() :
@@ -66,6 +67,7 @@ App::~App() {
 }
 
 int main() {
+    putenv("ESCDELAY=25"); // Turns off delay when pressing escape key
     App program;
     program.run();
 }

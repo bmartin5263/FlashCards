@@ -79,6 +79,7 @@ public:
     void setDeckPosition(int index);
 
     void activateCursorForEditor();
+    void activateCursorForQuiz();
     void moveCursor(int x, int y);
     void deactivateCursor();
 
@@ -103,6 +104,13 @@ public:
     void closeCardEditorFromList();
     void openQuiz();
     void closeQuiz();
+
+    void resetDeckMeterColors();
+    void setDeckMeterTickColor(int index, Colors color);
+    void setInputFieldText(char* text);
+    void setInputFieldCorrect();
+    void setInputFieldIncorrect();
+    void resetInputField();
 
     void updateButtonState(ButtonGroups group, ButtonState states[NUM_BUTTONS]);
     void startupInitialization();

@@ -4,6 +4,8 @@
 
 #include <assert.h>
 #include <string.h>
+#include <time.h>
+#include <cctype>
 #include "activities.h"
 #include "app.h"
 
@@ -397,6 +399,11 @@ void CardViewer::quiz() {
         ui->openCardViewer();
         ui->injectCurrentCard(deck->getCard(cardIndex), cardIndex);
         ui->setDeckPosition(cardIndex);
+        if (isFront) {
+            ui->setCardSide(isFront, deck->getFrontTitle(), frontColor);
+        } else {
+            ui->setCardSide(isFront, deck->getBackTitle(), backColor);
+        }
         updateButtonStates();
     }
 }
@@ -1092,31 +1099,57 @@ CardEditor::~CardEditor() {
 
 DeckQuiz::DeckQuiz(Deck *deck) :
     returnCode(ReturnCode::ABORTED), ui(UI::getInstance()), deckRef(deck), buttonPointer(4),
-    cardIndex(0), givingInput(false), isFront(true), running(false)
+    cardIndex(0), nextCardToAnswer(0), deckSize(deck->getSize()), inputLength(0), givingInput(true),
+    isFront(true), running(false)
 {
     for (int i = 0; i < NUM_BUTTONS; i++) {
         buttonMap[i] = ButtonState::DISABLED;
     }
     UI::resolveColorScheme(deck->getColorScheme(), frontColor, backColor);
-    int deckSize = deck->getSize();
 
-    quizDeck = new Card*[deck->getSize()];
+    quizDeck = new Card*[deckSize];
     for (int i = 0; i < deckSize; i++) {
         quizDeck[i] = deck->getCard(i);
     }
+    quizResults = new Results[deckSize];
+    for (int i = 0; i < deckSize; i++) {
+        quizResults[i] = Results::PENDING;
+    }
 
-    ui->injectCurrentCard(quizDeck[0], 0);
-    ui->setDeckPosition(0);
+    shuffleDeck();
 }
 
-
+void DeckQuiz::updateDeckMeter() {
+    ui->setDeckPosition(cardIndex);
+    ui->resetDeckMeterColors();
+    for (int i  = 0; i < deckSize; i++) {
+        switch (quizResults[i]) {
+            case Results::RIGHT:
+                ui->setDeckMeterTickColor(i+1, Colors::GREEN);
+                break;
+            case Results::WRONG:
+                ui->setDeckMeterTickColor(i+1, Colors::RED);
+                break;
+            case Results::PENDING:
+                if (i == cardIndex)
+                    ui->setDeckMeterTickColor(i+1, Colors::YELLOW);
+                break;
+        }
+    }
+}
 
 void DeckQuiz::launch() {
     running = true;
 
     // Prepare User Interface
     ui->openQuiz();
+    ui->setCardSide(true, deckRef->getFrontTitle(), frontColor);
+    ui->injectCurrentCard(quizDeck[0], 0);
+    ui->setDeckPosition(0);
+    ui->setInputFieldText(inputField);
     updateButtonStates();
+    updateDeckMeter();
+    startGivingInput();
 
     while (running) {
         ui->draw();
@@ -1124,17 +1157,44 @@ void DeckQuiz::launch() {
         handleInput(input);
     }
 
+    ui->resetInputField();
     ui->closeQuiz();
 }
 
 void DeckQuiz::handleInput(int input) {
     if (givingInput) {
-
+        switch(input) {
+            case ESCAPE_KEY:
+                stopGivingInput();
+                return;
+            case ENTER_KEY:
+                answer();
+                return;
+            default:
+                break;
+        }
+        if (App::isValidInput(input))
+            modifyField(input);
     }
     else {
         int movement = UI::getMovement(input);
         if (movement < 0) {
-            running = false;
+            if (input == ' ' || input == ENTER_KEY) {
+                switch (buttonPointer) {
+                    case BI_ANSWER:
+                        startGivingInput();
+                        break;
+                    case BI_RIGHT_ARROW:
+                        nextCard();
+                        break;
+                    case BI_LEFT_ARROW:
+                        prevCard();
+                        break;
+                    default:
+                        running = false;
+                        break;
+                }
+            }
         }
         else {
             moveButtonPointer(movement);
@@ -1142,12 +1202,41 @@ void DeckQuiz::handleInput(int input) {
     }
 }
 
+void DeckQuiz::modifyField(int input) {
+    if (input == DELETE_KEY) {
+        if (inputLength > 0) {
+            inputField[--inputLength] = '\0';
+            ui->moveCursor(1+inputLength, INPUT_Y_AXIS);
+        }
+    }
+    else if (inputLength < INPUT_FIELD_LENGTH) {
+        inputField[inputLength++] = (char)input;
+        ui->moveCursor(1+inputLength, INPUT_Y_AXIS);
+    }
+    ui->setInputFieldText(inputField);
+}
+
+void DeckQuiz::startGivingInput() {
+    givingInput = true;
+    ui->activateCursorForQuiz();
+    ui->moveCursor(1+inputLength, INPUT_Y_AXIS);
+    ui->console("Type Your Answer and Press Enter. Exit with ESC");
+    updateButtonStates();
+}
+
+void DeckQuiz::stopGivingInput() {
+    givingInput = false;
+    ui->deactivateCursor();
+    ui->console("Press Answer to Give Answer for Other Side");
+    updateButtonStates();
+}
+
 void DeckQuiz::updateButtonStates() {
     for (int i = 0; i < NUM_BUTTONS; i++) buttonMap[i] = ButtonState::DISABLED;
 
-    buttonMap[BI_ANSWER] = ButtonState::ACTIVE;
-    buttonMap[BI_LEFT_ARROW] = ButtonState::ACTIVE;
-    buttonMap[BI_RIGHT_ARROW] = ButtonState::ACTIVE;
+    if (cardIndex == nextCardToAnswer) buttonMap[BI_ANSWER] = ButtonState::ACTIVE;
+    if (cardIndex < deckSize-1 && cardIndex < nextCardToAnswer) buttonMap[BI_RIGHT_ARROW] = ButtonState::ACTIVE;
+    if (cardIndex > 0) buttonMap[BI_LEFT_ARROW] = ButtonState::ACTIVE;
     buttonMap[BI_END_QUIZ] = ButtonState::ACTIVE;
     if (!givingInput) {
         if (buttonMap[buttonPointer] == ButtonState::DISABLED) {
@@ -1155,19 +1244,125 @@ void DeckQuiz::updateButtonStates() {
         } else {
             buttonMap[buttonPointer] = ButtonState::HIGHTLIGHTED;
         }
+    } else {
+        buttonMap[BI_ANSWER] = ButtonState::PRESSED;
     }
     ui->updateButtonState(ButtonGroups::QUIZ, buttonMap);
 }
 
 void DeckQuiz::moveButtonPointer(int direction) {
-    buttonPointer = movementMap[buttonPointer][direction];
-    while (buttonMap[buttonPointer] == ButtonState::DISABLED) {
+    if (buttonMap[BI_ANSWER] == ButtonState::DISABLED && (direction == DIRECTION_DOWN || direction == DIRECTION_UP)) {
+        if ((buttonPointer == BI_LEFT_ARROW || buttonPointer == BI_RIGHT_ARROW)) {
+            buttonPointer = BI_END_QUIZ;
+        } else if (buttonPointer == BI_END_QUIZ) {
+            buttonPointer = BI_RIGHT_ARROW;
+        }
+    } else {
         buttonPointer = movementMap[buttonPointer][direction];
+        while (buttonMap[buttonPointer] == ButtonState::DISABLED) {
+            buttonPointer = movementMap[buttonPointer][direction];
+        }
     }
     updateButtonStates();
+}
+
+void DeckQuiz::shuffleDeck() {
+    srand(time(NULL));
+    for (int i = deckSize-1; i > 0; i--) {
+        int j = rand() % (i+1);
+        swap(&quizDeck[i], &quizDeck[j]);
+    }
+}
+
+void DeckQuiz::swap(Card** a, Card** b) {
+    Card* temp = *a;
+    *a = *b;
+    *b = temp;
+}
+
+void DeckQuiz::nextCard() {
+    if (cardIndex < deckSize - 1 && cardIndex < nextCardToAnswer) {
+        cardIndex++;
+        ui->setDeckPosition(cardIndex);
+        ui->injectCurrentCard(quizDeck[cardIndex], cardIndex);
+
+        if (cardIndex == nextCardToAnswer) {
+            if (buttonPointer == BI_RIGHT_ARROW) {
+                buttonPointer = BI_LEFT_ARROW;
+            }
+            ui->resetInputField();
+        } else {
+            if (quizResults[cardIndex] == Results::WRONG) {
+                ui->setInputFieldIncorrect();
+            }
+            else if (quizResults[cardIndex] == Results::RIGHT) {
+                ui->setInputFieldCorrect();
+            }
+            ui->setInputFieldText(quizDeck[cardIndex]->getBackTitle());
+        }
+
+        updateButtonStates();
+    }
+}
+
+void DeckQuiz::prevCard() {
+    if (cardIndex > 0) {
+        cardIndex--;
+        ui->setDeckPosition(cardIndex);
+        ui->injectCurrentCard(quizDeck[cardIndex], cardIndex);
+
+        if (cardIndex == 0 && buttonPointer == BI_LEFT_ARROW) buttonPointer = BI_RIGHT_ARROW;
+
+        if (quizResults[cardIndex] == Results::WRONG) ui->setInputFieldIncorrect();
+        else if (quizResults[cardIndex] == Results::RIGHT) ui->setInputFieldCorrect();
+        ui->setInputFieldText(quizDeck[cardIndex]->getBackTitle());
+
+        updateButtonStates();
+    }
+}
+
+void DeckQuiz::answer() {
+    if (cardIndex == nextCardToAnswer) {
+        char myAnswer[INPUT_FIELD_LENGTH] = {0};
+        char correctAnswer[INPUT_FIELD_LENGTH] = {0};
+        strncpy(myAnswer, inputField, (size_t)inputLength);
+        strncpy(correctAnswer, quizDeck[nextCardToAnswer]->getBackTitle(), (size_t)quizDeck[nextCardToAnswer]->getBackTitleLength());
+        for (int i = 0; i < inputLength; i++) myAnswer[i] = (char)tolower(myAnswer[i]);
+        for (int i = 0; i < (size_t)quizDeck[nextCardToAnswer]->getBackTitleLength(); i++) correctAnswer[i] = (char)tolower(correctAnswer[i]);
+
+        if (strcmp(myAnswer, correctAnswer) == 0) {
+            ui->setInputFieldCorrect();
+            quizResults[nextCardToAnswer++] = Results::RIGHT;
+        } else {
+            beep();
+            ui->setInputFieldIncorrect();
+            quizResults[nextCardToAnswer++] = Results::WRONG;
+        }
+        ui->deactivateCursor();
+        ui->setCardSide(false, deckRef->getBackTitle(), backColor);
+        updateDeckMeter();
+        ui->draw();
+        getch();
+        cardIndex++;
+        inputLength = 0;
+        memset(inputField, '\0', INPUT_FIELD_LENGTH);
+        if (cardIndex >= deckSize) {
+            running = false;
+        } else {
+            ui->activateCursorForQuiz();
+            ui->moveCursor(1+inputLength, INPUT_Y_AXIS);
+            ui->resetInputField();
+            ui->setCardSide(true, deckRef->getFrontTitle(), frontColor);
+            ui->setDeckPosition(cardIndex);
+            ui->injectCurrentCard(quizDeck[cardIndex], cardIndex);
+            updateDeckMeter();
+            updateButtonStates();
+        }
+    }
 }
 
 DeckQuiz::~DeckQuiz() {
     UI::releaseInstance();
     delete[] quizDeck;
+    delete[] quizResults;
 }

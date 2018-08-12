@@ -140,12 +140,17 @@ public:
     void hide(WINDOW*);
     void show();
     void clear(WINDOW* window);
+    void makeRed();
+    void makeGreen();
+    void resetColor();
 
 private:
 
     Card* card;
     Colors color;
     bool front;
+    bool isRed;
+    bool isGreen;
 
 };
 
@@ -197,7 +202,6 @@ public:
     void render(WINDOW* window);
     void initializeForDeck();
     void initializeForCard();
-    void cleanup();
     void setFormFields(char* field1, char* field2, char* field3, char* field4);
     void setIndex(int index);
     void hide(WINDOW*);

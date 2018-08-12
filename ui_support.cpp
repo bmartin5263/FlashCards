@@ -582,7 +582,8 @@ Button::~Button() {
 //////////////////////////////////////////////////////////////////////////////
 
 CardBox::CardBox(int x, int y, int length) :
-    Element(x, y, length, CARD_BOX_HEIGHT), card(nullptr)
+    Element(x, y, length, CARD_BOX_HEIGHT), card(nullptr), front(false),
+    isRed(false), isGreen(false)
 {
 //    int labelLen = length-2;
 //    title = new char[labelLen+1];
@@ -605,7 +606,9 @@ void CardBox::render(WINDOW *window) {
         if (card == nullptr) {
             color = Colors::GRAY;
         } else {
-            color = this->color;
+            if (isRed) color = Colors::RED;
+            else if (isGreen) color = Colors::GREEN;
+            else color = this->color;
         }
 
         wattron(window, UI::getColorPair(color));
@@ -672,6 +675,19 @@ void CardBox::setCard(Card *card) {
 
 void CardBox::setColor(Colors color) {
     this->color = color;
+}
+
+void CardBox::makeGreen() {
+    isGreen = true;
+}
+
+void CardBox::makeRed() {
+    isRed = true;
+}
+
+void CardBox::resetColor() {
+    isGreen = false;
+    isRed = false;
 }
 
 void CardBox::hide(WINDOW *window) {
@@ -879,14 +895,6 @@ void Form::initializeForDeck() {
 void Form::initializeForCard() {
     isDeckEdit = false;
     initialized = true;
-}
-
-void Form::cleanup() {
-    initialized = false;
-    this->field1 = nullptr;
-    this->field2 = nullptr;
-    this->field3 = nullptr;
-    this->field4 = nullptr;
 }
 
 void Form::setFormFields(char *field1, char *field2, char *field3, char *field4) {
@@ -1175,16 +1183,20 @@ void UI::initializeElements()
 }
 
 void UI::draw() {
+    curs_set(0);
     C_CONSOLE->render();
     C_CARD_VIEW->render();
     C_BUTTONS->render();
     C_LIST_VIEW->render();
     C_EDIT_VIEW->render();
-    if (cursorActive) {
-        wmove(cursorCanvas->window, cursorY, cursorX);
-    }
     update_panels();
     doupdate();
+    if (cursorActive) {
+        curs_set(1);
+        wmove(cursorCanvas->window, cursorY, cursorX);
+        update_panels();
+        doupdate();
+    }
 }
 
 /*

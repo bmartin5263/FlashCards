@@ -12,6 +12,8 @@
 #define CARD_TABLE_COLUMN_LEN 23
 #define INPUT_FIELD_LENGTH 48
 
+#define INPUT_Y_AXIS 13
+
 #define DIRECTION_UP 0
 #define DIRECTION_RIGHT 1
 #define DIRECTION_DOWN 2
@@ -20,6 +22,7 @@
 #define ENTER_KEY 10
 #define DELETE_KEY 127
 #define TAB_KEY 9
+#define ESCAPE_KEY 27
 
 // BI = Button Index
 #define BI_LEFT_ARROW 0

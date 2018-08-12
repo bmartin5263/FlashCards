@@ -5,7 +5,6 @@
 #include "ui.h"
 
 void UI::activateCursor(Canvas *hostCanvas) {
-    curs_set(1);
     cursorActive = true;
     cursorCanvas = hostCanvas;
 }
@@ -13,11 +12,10 @@ void UI::activateCursor(Canvas *hostCanvas) {
 void UI::moveCursor(int x, int y) {
     cursorX = x;
     cursorY = y;
-    wrefresh(cursorCanvas->window);
+    wrefresh(cursorCanvas->window); //TODO: is this needed?
 }
 
 void UI::deactivateCursor() {
-    curs_set(0);
     cursorActive = false;
     cursorCanvas = nullptr;
     cursorX = 0;
@@ -26,6 +24,10 @@ void UI::deactivateCursor() {
 
 void UI::activateCursorForEditor() {
     activateCursor(C_EDIT_VIEW);
+}
+
+void UI::activateCursorForQuiz() {
+    activateCursor(C_CARD_VIEW);
 }
 
 void UI::assignDeckList(DeckLinkedList *deckList) {
@@ -59,11 +61,13 @@ void UI::openQuiz() {
     switchButtonGroup(ButtonGroups::QUIZ);
     C_CARD_VIEW->show();
     C_CONSOLE->showElement(CI_DECK_SIZE);
+    C_CARD_VIEW->showElement(CI_INPUT);
     console("CardViewer");
 }
 
 void UI::closeQuiz() {
     C_CONSOLE->hideElement(CI_DECK_SIZE);
+    C_CARD_VIEW->hideElement(CI_INPUT);
 }
 
 void UI::openCardLister() {
@@ -117,6 +121,28 @@ void UI::error(const char *message) {
     E_CONSOLE->setText(message, Colors::RED, Attributes::NORMAL);
 }
 
+void UI::setInputFieldText(char *text) {
+    E_INPUT->setText(text);
+}
+
+void UI::setInputFieldCorrect() {
+    E_INPUT->setText("Correct!");
+    E_CARD_BOX->makeGreen();
+    E_INPUT->setColor(Colors::GREEN);
+}
+
+void UI::setInputFieldIncorrect() {
+    E_INPUT->setText("Incorrect!");
+    E_CARD_BOX->makeRed();
+    E_INPUT->setColor(Colors::RED);
+}
+
+void UI::resetInputField() {
+    E_INPUT->setText("");
+    E_INPUT->setColor(Colors::WHITE);
+    E_CARD_BOX->resetColor();
+}
+
 void UI::injectCurrentDeck(Deck *deck) {
     char str[3];
     sprintf(str, "%d", deck->getSize());
@@ -125,6 +151,10 @@ void UI::injectCurrentDeck(Deck *deck) {
     E_DECK_NAME->setAttribute(Attributes::NORMAL);
     E_DECK_METER->setDeck(deck);
     E_CARD_TABLE->setDeck(deck);
+    resetDeckMeterColors();
+}
+
+void UI::resetDeckMeterColors() {
     E_DECK_METER->resetColors();
 }
 
@@ -147,6 +177,10 @@ void UI::injectFields(char *field1, char *field2, char *field3, char *field4) {
     E_EDIT_FORM->setFormFields(field1, field2, field3, field4);
 }
 
+void UI::setDeckMeterTickColor(int index, Colors color) {
+    E_DECK_METER->setColorForTick(index, color);
+}
+
 void UI::setCardSide(bool isFront, const char* sideName, Colors color) {
     E_SIDE_NAME->setText(sideName);
     E_CARD_BOX->setSide(isFront);
@@ -155,7 +189,7 @@ void UI::setCardSide(bool isFront, const char* sideName, Colors color) {
     E_DECK_NAME->setColor(color);
     E_DECK_SIZE->setColor(color);
     E_DECK_METER->setColor(color);
-    E_DECK_METER->resetColors();
+    resetDeckMeterColors();
     E_SIDE_NAME->setColor(color);
     E_CARD_NUM->setColor(color);
 }
