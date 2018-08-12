@@ -54,6 +54,10 @@ public:
         NORMAL, ABORTED
     };
 
+    enum class QuizMode {
+        FRONT, BACK, CANCEL
+    };
+
     CardViewer(Deck* currentDeck);
     CardViewer(const CardViewer&) = delete;
     CardViewer operator = (const CardViewer&) = delete;
@@ -69,6 +73,8 @@ public:
     void modifyDeck();
     void newCard();
     void quiz();
+    QuizMode getQuizMode();
+
     ReturnCode getReturnCode();
 
 private:
@@ -218,6 +224,9 @@ private:
 
 class DeckQuiz {
 
+    const static CardViewer::QuizMode FRONT = CardViewer::QuizMode::FRONT;
+    const static CardViewer::QuizMode BACK = CardViewer::QuizMode::BACK;
+
 public:
 
     enum class ReturnCode {
@@ -228,7 +237,7 @@ public:
         RIGHT, WRONG, PENDING
     };
 
-    DeckQuiz(Deck* deck);
+    DeckQuiz(Deck* deck, CardViewer::QuizMode);
     DeckQuiz(const DeckQuiz&) = delete;
     DeckQuiz operator = (const DeckQuiz&) = delete;
     ~DeckQuiz();
@@ -256,6 +265,7 @@ private:
     ButtonState buttonMap[NUM_BUTTONS];
     Colors frontColor;
     Colors backColor;
+    CardViewer::QuizMode mode;
     int buttonPointer;
     int cardIndex;
     int nextCardToAnswer;
@@ -264,7 +274,6 @@ private:
     char inputField[INPUT_FIELD_LENGTH + 1] = {0};
     Results* quizResults;
     bool givingInput;
-    bool isFront;
     bool running;
     ReturnCode returnCode;
 

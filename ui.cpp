@@ -12,7 +12,6 @@ void UI::activateCursor(Canvas *hostCanvas) {
 void UI::moveCursor(int x, int y) {
     cursorX = x;
     cursorY = y;
-    wrefresh(cursorCanvas->window); //TODO: is this needed?
 }
 
 void UI::deactivateCursor() {
@@ -109,6 +108,16 @@ void UI::closeCardEditorFromList() {
     C_EDIT_VIEW->hide();
 }
 
+void UI::openQuizSelector() {
+    E_CARD_BOX->freeze();
+    C_QUIZ_MODE->show();
+}
+
+void UI::closeQuizSelector() {
+    E_CARD_BOX->thaw();
+    C_QUIZ_MODE->hide();
+}
+
 void UI::initializeCardEditor() {
     E_EDIT_FORM->initializeForCard();
 }
@@ -200,6 +209,14 @@ void UI::setDeckListIndex(int index) {
 
 void UI::setCardListIndex(int index) {
     E_CARD_TABLE->setIndex(index);
+}
+
+void UI::setQuizModeIndex(int index) {
+    E_QUIZ_MODE_TABLE->setIndex(index);
+}
+
+void UI::setQuizModeNames(char *front, char *back) {
+    E_QUIZ_MODE_TABLE->setSideNames(front, back);
 }
 
 void UI::setDeckPosition(int index) {

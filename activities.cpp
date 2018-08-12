@@ -333,7 +333,6 @@ void CardViewer::handleInput(int input) {
                     break;
                 default:
                     break;
-
             }
         }
     } else {
@@ -393,8 +392,12 @@ void CardViewer::newCard() {
 
 void CardViewer::quiz() {
     if (deck->getSize() > 0) {
+        QuizMode mode = getQuizMode();
+        if (mode == QuizMode::CANCEL) {
+            return;
+        }
         ui->closeCardViewer();
-        DeckQuiz dq(deck);
+        DeckQuiz dq(deck, mode);
         dq.launch();
         ui->openCardViewer();
         ui->injectCurrentCard(deck->getCard(cardIndex), cardIndex);
@@ -405,6 +408,52 @@ void CardViewer::quiz() {
             ui->setCardSide(isFront, deck->getBackTitle(), backColor);
         }
         updateButtonStates();
+    }
+}
+
+CardViewer::QuizMode CardViewer::getQuizMode() {
+    ui->openQuizSelector();
+    ui->setQuizModeNames(deck->getFrontTitle(), deck->getBackTitle());
+    int index = 0;
+    bool running = true;
+    int input;
+
+    while (running) {
+        ui->setQuizModeIndex(index);
+        ui->draw();
+        input = getch();
+        switch (input) {
+            case KEY_DOWN:
+                if (index == 2) {
+                    index = 0;
+                }
+                else {
+                    index++;
+                }
+                break;
+            case KEY_UP:
+                if (index == 0) {
+                    index = 2;
+                }
+                else {
+                    index--;
+                }
+                break;
+            case ' ':
+            case ENTER_KEY:
+                running = false;
+            default:
+                break;
+        }
+    }
+
+    ui->closeQuizSelector();
+    if (index == 0) {
+        return QuizMode::FRONT;
+    } else if (index == 1) {
+        return QuizMode::BACK;
+    } else {
+        return QuizMode::CANCEL;
     }
 }
 
@@ -1097,10 +1146,10 @@ CardEditor::~CardEditor() {
     UI::releaseInstance();
 }
 
-DeckQuiz::DeckQuiz(Deck *deck) :
-    returnCode(ReturnCode::ABORTED), ui(UI::getInstance()), deckRef(deck), buttonPointer(4),
+DeckQuiz::DeckQuiz(Deck *deck, CardViewer::QuizMode mode) :
+    returnCode(ReturnCode::ABORTED), ui(UI::getInstance()), deckRef(deck), mode(mode), buttonPointer(4),
     cardIndex(0), nextCardToAnswer(0), deckSize(deck->getSize()), inputLength(0), givingInput(true),
-    isFront(true), running(false)
+    running(false)
 {
     for (int i = 0; i < NUM_BUTTONS; i++) {
         buttonMap[i] = ButtonState::DISABLED;
@@ -1143,7 +1192,11 @@ void DeckQuiz::launch() {
 
     // Prepare User Interface
     ui->openQuiz();
-    ui->setCardSide(true, deckRef->getFrontTitle(), frontColor);
+    if (mode == FRONT) {
+        ui->setCardSide(false, deckRef->getBackTitle(), backColor);
+    } else if (mode == BACK) {
+        ui->setCardSide(true, deckRef->getFrontTitle(), frontColor);
+    }
     ui->injectCurrentCard(quizDeck[0], 0);
     ui->setDeckPosition(0);
     ui->setInputFieldText(inputField);
@@ -1190,8 +1243,34 @@ void DeckQuiz::handleInput(int input) {
                     case BI_LEFT_ARROW:
                         prevCard();
                         break;
-                    default:
+                    case BI_END_QUIZ:
+                        returnCode = ReturnCode::NORMAL;
                         running = false;
+                        break;
+                    default:
+                        // Why are you here!?
+                        assert(false);
+                }
+            } else {
+                switch(input) {
+                    case 'A':
+                    case 'a':
+                        answer();
+                        break;
+                    case '.':
+                    case '>':
+                        nextCard();
+                        break;
+                    case ',':
+                    case '<':
+                        prevCard();
+                        break;
+                    case 'e':
+                    case 'E':
+                        returnCode = ReturnCode::NORMAL;
+                        running = false;
+                        return;
+                    default:
                         break;
                 }
             }
@@ -1298,9 +1377,12 @@ void DeckQuiz::nextCard() {
             else if (quizResults[cardIndex] == Results::RIGHT) {
                 ui->setInputFieldCorrect();
             }
-            ui->setInputFieldText(quizDeck[cardIndex]->getBackTitle());
+            if (mode == BACK) {
+                ui->setInputFieldText(quizDeck[cardIndex]->getBackTitle());
+            } else {
+                ui->setInputFieldText(quizDeck[cardIndex]->getFrontTitle());
+            }
         }
-
         updateButtonStates();
     }
 }
@@ -1311,11 +1393,15 @@ void DeckQuiz::prevCard() {
         ui->setDeckPosition(cardIndex);
         ui->injectCurrentCard(quizDeck[cardIndex], cardIndex);
 
-        if (cardIndex == 0 && buttonPointer == BI_LEFT_ARROW) buttonPointer = BI_RIGHT_ARROW;
+        if (cardIndex == 0 && (buttonPointer == BI_LEFT_ARROW || buttonPointer == BI_ANSWER)) buttonPointer = BI_RIGHT_ARROW;
 
         if (quizResults[cardIndex] == Results::WRONG) ui->setInputFieldIncorrect();
         else if (quizResults[cardIndex] == Results::RIGHT) ui->setInputFieldCorrect();
-        ui->setInputFieldText(quizDeck[cardIndex]->getBackTitle());
+        if (mode == BACK) {
+            ui->setInputFieldText(quizDeck[cardIndex]->getBackTitle());
+        } else {
+            ui->setInputFieldText(quizDeck[cardIndex]->getFrontTitle());
+        }
 
         updateButtonStates();
     }
@@ -1326,9 +1412,21 @@ void DeckQuiz::answer() {
         char myAnswer[INPUT_FIELD_LENGTH] = {0};
         char correctAnswer[INPUT_FIELD_LENGTH] = {0};
         strncpy(myAnswer, inputField, (size_t)inputLength);
-        strncpy(correctAnswer, quizDeck[nextCardToAnswer]->getBackTitle(), (size_t)quizDeck[nextCardToAnswer]->getBackTitleLength());
+        int correctLength = -1;
+        switch (mode) {
+            case FRONT:
+                correctLength = quizDeck[nextCardToAnswer]->getFrontTitleLength();
+                strncpy(correctAnswer, quizDeck[nextCardToAnswer]->getFrontTitle(), (size_t)correctLength);
+                break;
+            case BACK:
+                correctLength = quizDeck[nextCardToAnswer]->getBackTitleLength();
+                strncpy(correctAnswer, quizDeck[nextCardToAnswer]->getBackTitle(), (size_t)correctLength);
+                break;
+            default:
+                assert(false);
+        }
         for (int i = 0; i < inputLength; i++) myAnswer[i] = (char)tolower(myAnswer[i]);
-        for (int i = 0; i < (size_t)quizDeck[nextCardToAnswer]->getBackTitleLength(); i++) correctAnswer[i] = (char)tolower(correctAnswer[i]);
+        for (int i = 0; i < (size_t)correctLength; i++) correctAnswer[i] = (char)tolower(correctAnswer[i]);
 
         if (strcmp(myAnswer, correctAnswer) == 0) {
             ui->setInputFieldCorrect();
@@ -1339,7 +1437,16 @@ void DeckQuiz::answer() {
             quizResults[nextCardToAnswer++] = Results::WRONG;
         }
         ui->deactivateCursor();
-        ui->setCardSide(false, deckRef->getBackTitle(), backColor);
+        switch (mode) {
+            case FRONT:
+                ui->setCardSide(true, deckRef->getFrontTitle(), frontColor);
+                break;
+            case BACK:
+                ui->setCardSide(false, deckRef->getBackTitle(), backColor);
+                break;
+            default:
+                assert(false);
+        }
         updateDeckMeter();
         ui->draw();
         getch();
@@ -1352,7 +1459,16 @@ void DeckQuiz::answer() {
             ui->activateCursorForQuiz();
             ui->moveCursor(1+inputLength, INPUT_Y_AXIS);
             ui->resetInputField();
-            ui->setCardSide(true, deckRef->getFrontTitle(), frontColor);
+            switch (mode) {
+                case FRONT:
+                    ui->setCardSide(false, deckRef->getBackTitle(), backColor);
+                    break;
+                case BACK:
+                    ui->setCardSide(true, deckRef->getFrontTitle(), frontColor);
+                    break;
+                default:
+                    assert(false);
+            }
             ui->setDeckPosition(cardIndex);
             ui->injectCurrentCard(quizDeck[cardIndex], cardIndex);
             updateDeckMeter();

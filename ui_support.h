@@ -31,7 +31,7 @@ public:
     virtual void render(WINDOW*) = 0;
 
     void getXY(int &x, int &y);
-    void move(int x, int y);
+    //void move(int x, int y);
     void getDimensions(int &length, int &height);
     int getLength();
 
@@ -216,6 +216,27 @@ private:
     int fieldIndex;
     bool isDeckEdit;
     bool initialized;
+};
+
+class QuizModeTable : public Element {
+
+public:
+
+    QuizModeTable(int x, int y, int length, int height);
+    ~QuizModeTable();
+
+    void render(WINDOW* window);
+    void setIndex(int index);
+    void setSideNames(char* front, char* back);
+    void hide(WINDOW*);
+    void show();
+    void clear(WINDOW* window);
+
+private:
+
+    char* frontSide;
+    char* backSide;
+    int index;
 };
 
 /*

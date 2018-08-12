@@ -39,7 +39,7 @@ void App::getTestDeck() {
     myDeck->setBackTitle("BackSide");
     myDeck->setColorScheme(ColorSchemes::RED);
     Card* myCard = new Card();
-    myCard->setFrontTitle("Hello ");
+    myCard->setFrontTitle("Hello");
     myCard->setBackTitle("My Name Is Brandon");
     myDeck->addCard(myCard);
     Card* myCard2 = new Card();

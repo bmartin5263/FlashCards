@@ -314,10 +314,10 @@ void Element::getXY(int &x, int &y) {
     y = this->y;
 }
 
-void Element::move(int x, int y) {
-    this->x = x;
-    this->y = y;
-}
+//void Element::move(int x, int y) {
+//    this->x = x;
+//    this->y = y;
+//}
 
 void Element::freeze() {
     setHidden(true);
@@ -649,6 +649,7 @@ void CardBox::render(WINDOW *window) {
             }
             if (titleLen > 0) {
                 int titleOffset = (int)floor(titleLen/2);
+                if (titleLen % 2 != 0) titleOffset += 1;
                 if (subtitleLen > 0)
                     mvwaddstr(window, y+3, x+1+center-titleOffset, title);
                 else
@@ -659,7 +660,6 @@ void CardBox::render(WINDOW *window) {
                 mvwaddstr(window, y+5, x+1+center-subtitleOffset, sub);
             }
         }
-
         wattroff(window, UI::getColorPair(color));
         wnoutrefresh(window);
     }
@@ -1000,6 +1000,78 @@ Form::~Form() {
 
 //////////////////////////////////////////////////////////////////////////////
 
+QuizModeTable::QuizModeTable(int x, int y, int length, int height) :
+        Element(x, y, length, height), frontSide(nullptr), backSide(nullptr), index(0)
+{
+}
+
+void QuizModeTable::render(WINDOW *window) {
+    if (!isHidden()) {
+        clear(window);
+        int length;
+        int height;
+        int x;
+        int y;
+        getDimensions(length, height);
+        getXY(x, y);
+        int currentIndex = 0;
+        for (int i = y; i < y + height; i++) {
+            if (currentIndex == 0) {
+                mvwaddnstr(window, i, x, frontSide, length);
+                if (strlen(frontSide) > length) mvwaddnstr(window, i, length-2, "...", 3);
+            } else if (currentIndex == 1) {
+                mvwaddnstr(window, i, x, backSide, length);
+                if (strlen(backSide) > length) mvwaddnstr(window, i, length-2, "...", 3);
+            } else {
+                mvwaddstr(window, i, x, "Cancel");
+            }
+            if (currentIndex == index) {
+                mvwchgat(window, i, x, length, UI::getAttribute(Attributes::NORMAL), (short) UI::getPairNumber(Colors::WHITE_HL), nullptr);
+            }
+            currentIndex++;
+        }
+        wnoutrefresh(window);
+    }
+}
+
+void QuizModeTable::setIndex(int index) {
+    this->index = index;
+}
+
+void QuizModeTable::setSideNames(char *front, char *back) {
+    this->frontSide = front;
+    this->backSide = back;
+}
+
+void QuizModeTable::hide(WINDOW *window) {
+    setHidden(true);
+    clear(window);
+    wnoutrefresh(window);
+}
+
+void QuizModeTable::clear(WINDOW *window) {
+    int length;
+    int height;
+    int x;
+    int y;
+    getDimensions(length, height);
+    getXY(x, y);
+    for (int i = 0; i < height; i++) {
+        mvwprintw(window, y+i, x, "%*s", length, "");
+    }
+}
+
+void QuizModeTable::show() {
+    setHidden(false);
+}
+
+QuizModeTable::~QuizModeTable() {
+    frontSide = nullptr;
+    backSide = nullptr;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
 UI::UI() :
     currentButtonGroup(ButtonGroups::NONE), cursorActive(false), cursorX(0), cursorY(0)
 {
@@ -1016,6 +1088,8 @@ void UI::initializeCanvases() {
     C_CARD_VIEW = new Canvas(0, 4, 50, 15, 5, Colors::WHITE, Borders::MIDDLE);
     C_LIST_VIEW = new Canvas(0, 4, 50, 15, 10, Colors::WHITE, Borders::MIDDLE);
     C_EDIT_VIEW = new Canvas(0, 12, 50, 7, 1, Colors::WHITE, Borders::MIDDLE);
+    C_QUIZ_MODE = new Canvas(9, 7, 32, 7, 1, Colors::WHITE, Borders::FLOAT);
+    top_panel(C_QUIZ_MODE->panel);
     top_panel(C_EDIT_VIEW->panel);
     update_panels();
     doupdate();
@@ -1025,6 +1099,8 @@ void UI::initializeCanvases() {
     C_CONSOLE->burnText(1, 3, "Deck:");
     C_CONSOLE->burnText(40, 3, "Size:");
     C_CARD_VIEW->burnRow(12);
+    C_QUIZ_MODE->burnText(7, 1, "Select Side to Quiz");
+    C_QUIZ_MODE->burnRow(2);
 }
 
 /*
@@ -1090,6 +1166,7 @@ void UI::initializeElements()
 
     E_DECK_TABLE = new DeckTable(1, 1, DECK_TABLE_LENGTH, DECK_TABLE_HEIGHT);
     E_CARD_TABLE = new CardTable(1, 1, DECK_TABLE_LENGTH, DECK_TABLE_HEIGHT);
+    E_QUIZ_MODE_TABLE = new QuizModeTable(1, 3, QUIZ_TABLE_LENGTH, QUIZ_TABLE_HEIGHT);
 
     E_CARD_BOX = new CardBox(3, 2, CARD_BOX_LENGTH);
 
@@ -1124,6 +1201,7 @@ void UI::initializeElements()
     C_BUTTONS->addElement(E_NEW_DECK_BUTTON);
     C_BUTTONS->addElement(E_ANSWER_BUTTON);
     C_EDIT_VIEW->addElement(E_EDIT_FORM);
+    C_QUIZ_MODE->addElement(E_QUIZ_MODE_TABLE);
 
     // Create Group Arrays
     deckListButtons[0] = CI_LEFT_ARROW;
@@ -1189,6 +1267,7 @@ void UI::draw() {
     C_BUTTONS->render();
     C_LIST_VIEW->render();
     C_EDIT_VIEW->render();
+    C_QUIZ_MODE->render();
     update_panels();
     doupdate();
     if (cursorActive) {
@@ -1210,5 +1289,6 @@ UI::~UI()
     delete C_LIST_VIEW;
     delete C_BUTTONS;
     delete C_EDIT_VIEW;
+    delete C_QUIZ_MODE;
     endwin();
 }

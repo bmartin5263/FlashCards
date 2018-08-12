@@ -21,6 +21,8 @@
 #define CARD_BOX_LENGTH 44
 #define DECK_TABLE_LENGTH 48
 #define DECK_TABLE_HEIGHT 13
+#define QUIZ_TABLE_LENGTH 30
+#define QUIZ_TABLE_HEIGHT 3
 #define FORM_LENGTH 48
 #define FORM_HEIGHT 5
 
@@ -77,6 +79,8 @@ public:
     void setEditorIndex(int index);
     void setCardSide(bool isFront, const char* sideName, Colors color);
     void setDeckPosition(int index);
+    void setQuizModeIndex(int index);
+    void setQuizModeNames(char* front, char* back);
 
     void activateCursorForEditor();
     void activateCursorForQuiz();
@@ -104,6 +108,8 @@ public:
     void closeCardEditorFromList();
     void openQuiz();
     void closeQuiz();
+    void openQuizSelector();
+    void closeQuizSelector();
 
     void resetDeckMeterColors();
     void setDeckMeterTickColor(int index, Colors color);
@@ -138,6 +144,8 @@ private:
     Canvas* C_CARD_VIEW;
     Canvas* C_LIST_VIEW;
     Canvas* C_EDIT_VIEW;
+    Canvas* C_QUIZ_MODE;
+    Canvas* C_RESULTS;
 
     /* Element */
     Label* E_CONSOLE;
@@ -167,6 +175,7 @@ private:
     CardBox* E_CARD_BOX;
     DeckTable* E_DECK_TABLE;
     CardTable* E_CARD_TABLE;
+    QuizModeTable* E_QUIZ_MODE_TABLE;
     Form* E_EDIT_FORM;
 
     ButtonGroups currentButtonGroup;
