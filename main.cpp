@@ -3,10 +3,18 @@
 #include "activities.h"
 #include "app.h"
 #include <stdlib.h>
+#include <signal.h>
 
+bool App::appIsRunning = false;
+
+//void interruptHandler(int sig) {
+//    beep();
+//    App::appIsRunning = false;
+//}
 
 App::App() :
-    ui(UI::getInstance()), deckList(nullptr) {
+    ui(UI::getInstance()), deckList(nullptr)
+{
 }
 
 bool App::isValidInput(int input) {
@@ -17,6 +25,8 @@ bool App::isValidInput(int input) {
 }
 
 void App::run() {
+    appIsRunning = true;
+    //signal(SIGINT, interruptHandler);
     deckList = parseDataFile();
     getTestDeck();
 
@@ -25,7 +35,6 @@ void App::run() {
     DeckLister dl(deckList);
     dl.launch();
     DeckLister::ReturnCode returnCode = dl.getReturnCode();
-    assert(returnCode == DeckLister::ReturnCode::NORMAL);
 }
 
 DeckLinkedList* App::parseDataFile() {

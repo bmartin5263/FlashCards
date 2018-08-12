@@ -34,7 +34,7 @@ void DeckLister::launch() {
     ui->setDeckListIndex(deckIndex);
     updateButtonStates();
 
-    while (running) {
+    while (running && App::appIsRunning) {
         ui->draw();
         int input = getch();
         handleInput(input);
@@ -262,7 +262,7 @@ void CardViewer::launch() {
     ui->setCardSide(true, deck->getFrontTitle(), frontColor);
     updateButtonStates();
 
-    while (running) {
+    while (running && App::appIsRunning) {
         ui->draw();
         int input = getch();
         handleInput(input);
@@ -399,6 +399,7 @@ void CardViewer::quiz() {
         ui->closeCardViewer();
         DeckQuiz dq(deck, mode);
         dq.launch();
+
         ui->openCardViewer();
         ui->injectCurrentCard(deck->getCard(cardIndex), cardIndex);
         ui->setDeckPosition(cardIndex);
@@ -531,7 +532,7 @@ void CardLister::launch() {
     running = true;
     updateButtonStates();
 
-    while (running) {
+    while (running && App::appIsRunning) {
         ui->draw();
         int input = getch();
         handleInput(input);
@@ -786,7 +787,7 @@ void DeckEditor::launch() {
 
     running = true;
 
-    while (running) {
+    while (running && App::appIsRunning) {
         ui->draw();
         int input = getch();
         handleInput(input);
@@ -982,7 +983,7 @@ void CardEditor::launch() {
 
     running = true;
 
-    while (running) {
+    while (running && App::appIsRunning) {
         ui->draw();
         int input = getch();
         handleInput(input);
@@ -1148,8 +1149,8 @@ CardEditor::~CardEditor() {
 
 DeckQuiz::DeckQuiz(Deck *deck, CardViewer::QuizMode mode) :
     returnCode(ReturnCode::ABORTED), ui(UI::getInstance()), deckRef(deck), mode(mode), buttonPointer(4),
-    cardIndex(0), nextCardToAnswer(0), deckSize(deck->getSize()), inputLength(0), givingInput(true),
-    running(false)
+    cardIndex(0), nextCardToAnswer(0), deckSize(deck->getSize()), inputLength(0), correct(0),
+    incorrect(0), skipped(0), givingInput(true), running(false)
 {
     for (int i = 0; i < NUM_BUTTONS; i++) {
         buttonMap[i] = ButtonState::DISABLED;
@@ -1164,7 +1165,7 @@ DeckQuiz::DeckQuiz(Deck *deck, CardViewer::QuizMode mode) :
     for (int i = 0; i < deckSize; i++) {
         quizResults[i] = Results::PENDING;
     }
-
+    skipped = deckSize;
     shuffleDeck();
 }
 
@@ -1204,11 +1205,17 @@ void DeckQuiz::launch() {
     updateDeckMeter();
     startGivingInput();
 
-    while (running) {
+    while (running && App::appIsRunning) {
         ui->draw();
         int input = getch();
         handleInput(input);
     }
+
+    ui->openQuizResults();
+    ui->setQuizResults(correct, incorrect, skipped, deckSize);
+    ui->draw();
+    getch();
+    ui->closeQuizResults();
 
     ui->resetInputField();
     ui->closeQuiz();
@@ -1431,11 +1438,14 @@ void DeckQuiz::answer() {
         if (strcmp(myAnswer, correctAnswer) == 0) {
             ui->setInputFieldCorrect();
             quizResults[nextCardToAnswer++] = Results::RIGHT;
+            correct++;
         } else {
             beep();
             ui->setInputFieldIncorrect();
             quizResults[nextCardToAnswer++] = Results::WRONG;
+            incorrect++;
         }
+        skipped--;
         ui->deactivateCursor();
         switch (mode) {
             case FRONT:
@@ -1475,6 +1485,10 @@ void DeckQuiz::answer() {
             updateButtonStates();
         }
     }
+}
+
+DeckQuiz::ReturnCode DeckQuiz::getReturnCode() {
+    return returnCode;
 }
 
 DeckQuiz::~DeckQuiz() {

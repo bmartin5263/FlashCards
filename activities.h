@@ -243,6 +243,7 @@ public:
     ~DeckQuiz();
 
     void launch();
+    DeckQuiz::ReturnCode getReturnCode();
 
 private:
 
@@ -262,6 +263,7 @@ private:
     Card** quizDeck;
     UI* ui;
     Deck* deckRef;
+    Results* quizResults;
     ButtonState buttonMap[NUM_BUTTONS];
     Colors frontColor;
     Colors backColor;
@@ -271,8 +273,10 @@ private:
     int nextCardToAnswer;
     int deckSize;
     int inputLength;
+    int correct;
+    int incorrect;
+    int skipped;
     char inputField[INPUT_FIELD_LENGTH + 1] = {0};
-    Results* quizResults;
     bool givingInput;
     bool running;
     ReturnCode returnCode;

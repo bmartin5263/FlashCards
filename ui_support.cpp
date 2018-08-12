@@ -239,6 +239,12 @@ void Canvas::burnText(int x, int y, const char *text) {
     wnoutrefresh(window);
 }
 
+void Canvas::burnText(int x, int y, const char *text, Colors color) {
+    mvwaddstr(window, y, x, text);
+    mvwchgat(window, y, x, (int)strlen(text), UI::getAttribute(Attributes::NORMAL), (short) UI::getPairNumber(color), nullptr);
+    wnoutrefresh(window);
+}
+
 void Canvas::addElement(Element *e) {
     assert(numElements < maxElements);
     elements[numElements++] = e;
@@ -1089,8 +1095,10 @@ void UI::initializeCanvases() {
     C_LIST_VIEW = new Canvas(0, 4, 50, 15, 10, Colors::WHITE, Borders::MIDDLE);
     C_EDIT_VIEW = new Canvas(0, 12, 50, 7, 1, Colors::WHITE, Borders::MIDDLE);
     C_QUIZ_MODE = new Canvas(9, 7, 32, 7, 1, Colors::WHITE, Borders::FLOAT);
+    C_RESULTS = new Canvas(9, 5, 32, 11, 4, Colors::WHITE, Borders::FLOAT);
     top_panel(C_QUIZ_MODE->panel);
     top_panel(C_EDIT_VIEW->panel);
+    top_panel(C_RESULTS->panel);
     update_panels();
     doupdate();
 
@@ -1101,6 +1109,13 @@ void UI::initializeCanvases() {
     C_CARD_VIEW->burnRow(12);
     C_QUIZ_MODE->burnText(7, 1, "Select Side to Quiz");
     C_QUIZ_MODE->burnRow(2);
+    C_RESULTS->burnRow(2);
+    C_RESULTS->burnText(13, 1, "Result");
+    C_RESULTS->burnText(10, 4, "Correct:");
+    C_RESULTS->burnText(8, 5, "Incorrect:");
+    C_RESULTS->burnText(10, 6, "Skipped:");
+    C_RESULTS->burnText(12, 7, "Grade:");
+    C_RESULTS->burnText(23, 9, "Finish", Colors::YELLOW_HL);
 }
 
 /*
@@ -1144,6 +1159,11 @@ void UI::initializeElements()
     E_SIDE_NAME = new Label(4, 1, SIDE_LABEL_LEN, Colors::WHITE, Attributes::NORMAL);
     E_CARD_NUM = new Label(44, 1, DECK_SIZE_LABEL_LEN, Colors::WHITE, Attributes::NORMAL);
     E_INPUT = new Label(1, 13, INPUT_LABEL_LEN, Colors::WHITE, Attributes::NORMAL);
+    E_CORRECT = new Label(19, 4, 2, Colors::GREEN, Attributes::NORMAL);
+    E_INCORRECT = new Label(19, 5, 2, Colors::RED, Attributes::NORMAL);
+    E_SKIPPED = new Label(19, 6, 2, Colors::YELLOW, Attributes::NORMAL);
+    E_GRADE = new Label(19, 7, 4, Colors::WHITE, Attributes::NORMAL);
+
     E_DECK_METER = new DeckMeter(1, 11, DECK_METER_LEN, Colors::WHITE);
 
     E_LEFT_ARROW = new Button(1, 1, ARROW_BUTTON_LEN, "<--", 3, Colors::WHITE, 0);
@@ -1202,6 +1222,10 @@ void UI::initializeElements()
     C_BUTTONS->addElement(E_ANSWER_BUTTON);
     C_EDIT_VIEW->addElement(E_EDIT_FORM);
     C_QUIZ_MODE->addElement(E_QUIZ_MODE_TABLE);
+    C_RESULTS->addElement(E_CORRECT);
+    C_RESULTS->addElement(E_INCORRECT);
+    C_RESULTS->addElement(E_SKIPPED);
+    C_RESULTS->addElement(E_GRADE);
 
     // Create Group Arrays
     deckListButtons[0] = CI_LEFT_ARROW;
@@ -1268,6 +1292,7 @@ void UI::draw() {
     C_LIST_VIEW->render();
     C_EDIT_VIEW->render();
     C_QUIZ_MODE->render();
+    C_RESULTS->render();
     update_panels();
     doupdate();
     if (cursorActive) {

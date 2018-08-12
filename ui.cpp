@@ -2,6 +2,8 @@
 // Created by Brandon Martin on 7/14/18.
 //
 
+#include <unistd.h>
+#include <assert.h>
 #include "ui.h"
 
 void UI::activateCursor(Canvas *hostCanvas) {
@@ -118,6 +120,14 @@ void UI::closeQuizSelector() {
     C_QUIZ_MODE->hide();
 }
 
+void UI::openQuizResults() {
+    C_RESULTS->show();
+}
+
+void UI::closeQuizResults() {
+    C_RESULTS->hide();
+}
+
 void UI::initializeCardEditor() {
     E_EDIT_FORM->initializeForCard();
 }
@@ -217,6 +227,22 @@ void UI::setQuizModeIndex(int index) {
 
 void UI::setQuizModeNames(char *front, char *back) {
     E_QUIZ_MODE_TABLE->setSideNames(front, back);
+}
+
+void UI::setQuizResults(int correct, int incorrect, int skipped, int total) {
+    char correctStr[3] = {0};
+    char incorrectStr[3] = {0};
+    char skippedStr[3] = {0};
+    char gradeStr[5] = {0};
+    int grade = (int)(((double)correct / (double)total) * 100);
+    sprintf(correctStr, "%d", correct);
+    sprintf(incorrectStr, "%d", incorrect);
+    sprintf(skippedStr, "%d", skipped);
+    sprintf(gradeStr, "%d%%", grade);
+    E_CORRECT->setText(correctStr);
+    E_INCORRECT->setText(incorrectStr);
+    E_SKIPPED->setText(skippedStr);
+    E_GRADE->setText(gradeStr);
 }
 
 void UI::setDeckPosition(int index) {

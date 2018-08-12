@@ -81,6 +81,7 @@ public:
     void setDeckPosition(int index);
     void setQuizModeIndex(int index);
     void setQuizModeNames(char* front, char* back);
+    void setQuizResults(int correct, int incorrect, int skipped, int total);
 
     void activateCursorForEditor();
     void activateCursorForQuiz();
@@ -110,6 +111,8 @@ public:
     void closeQuiz();
     void openQuizSelector();
     void closeQuizSelector();
+    void openQuizResults();
+    void closeQuizResults();
 
     void resetDeckMeterColors();
     void setDeckMeterTickColor(int index, Colors color);
@@ -154,6 +157,10 @@ private:
     Label* E_SIDE_NAME;
     Label* E_CARD_NUM;
     Label* E_INPUT;
+    Label* E_CORRECT;
+    Label* E_INCORRECT;
+    Label* E_SKIPPED;
+    Label* E_GRADE;
     DeckMeter* E_DECK_METER;
     Button* E_LEFT_ARROW;
     Button* E_RIGHT_ARROW;

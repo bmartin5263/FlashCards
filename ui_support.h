@@ -258,6 +258,7 @@ public:
 
     void burnRow(int y);
     void burnText(int x, int y, const char* text);
+    void burnText(int x, int y, const char* text, Colors color);
     void addElement(Element* e);
 
     void hide();

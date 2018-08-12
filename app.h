@@ -13,6 +13,7 @@ class App {
 public:
 
     static bool isValidInput(int input);
+    static bool appIsRunning;
 
     App();
     App(const App&) = delete;
