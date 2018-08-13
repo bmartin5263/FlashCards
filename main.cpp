@@ -96,13 +96,19 @@ void App::readDecks() {
 
     char line[256] = {0};
     while (fgets(line, sizeof(line), file)) {
-        int i = 0;
-        char* token = strtok(line, " ");
-        while (i < 2 && token != NULL) {
-            lineSplit[i++] = token;
-            token = strtok(NULL, " ");
+        if (line[0] == '$') {
+            int i = 0;
+            char* token = strtok(line, " ");
+            while (i < 2 && token != NULL) {
+                lineSplit[i++] = token;
+                token = strtok(NULL, " ");
+            }
+        } else if (line[0] == '!') {
+            lineSplit[0] = line;
+        } else {
+            continue;
         }
-        if (strcmp(lineSplit[0], "!DECK") == 0) {
+        if (strcmp(lineSplit[0], "!DECK\n") == 0) {
             if (newDeck != nullptr) {
                 if (newCard != nullptr) {
                     newDeck->addCard(newCard);
@@ -113,7 +119,7 @@ void App::readDecks() {
             newDeck = new Deck();
             editingCard = false;
         }
-        else if (strcmp(lineSplit[0], "!CARD") == 0) {
+        else if (strcmp(lineSplit[0], "!CARD\n") == 0) {
             assert(strcmp(newDeck->getFrontTitle(), "") != 0);
             assert(strcmp(newDeck->getBackTitle(), "") != 0);
             if (newCard != nullptr) {
@@ -141,8 +147,8 @@ void App::readDecks() {
             newDeck->setBackTitle(back);
         }
         else if (strcmp(lineSplit[0], "$SCHEME") == 0) {
-            if (strcmp(lineSplit[1], "blue")) newDeck->setColorScheme(ColorSchemes::BLUE);
-            else if (strcmp(lineSplit[1], "red")) newDeck->setColorScheme(ColorSchemes::RED);
+            if (strcmp(lineSplit[1], "blue\n") == 0) newDeck->setColorScheme(ColorSchemes::BLUE);
+            else if (strcmp(lineSplit[1], "red\n") == 0) newDeck->setColorScheme(ColorSchemes::RED);
         }
         else if (strcmp(lineSplit[0], "$FRONT-T") == 0) {
             assert(editingCard);
@@ -182,20 +188,26 @@ void App::readDecks() {
         deckList->addDeck(newDeck);
     }
 
-
     fclose(file);
 }
 
 void App::saveDecks() {
 
+    DeckNode* current = deckList->getHead();
+
     char const* const fileName = "data.txt";
     FILE* file = fopen(fileName, "w");
 
-    DeckNode* current = deckList->getHead();
+    if (current == nullptr) {
+        fclose(file);
+        return;
+    }
+    while (current->next != nullptr) current = current->next;
+
     while (current != nullptr) {
         Deck* deck = current->deck;
 
-        fprintf(file, "!DECK \n");
+        fprintf(file, "!DECK\n");
         // Name
         char name[MAX_DECK_INPUT_LEN+1] = {0};
         strncpy(name, deck->getName(), strlen(deck->getName()));
@@ -227,32 +239,37 @@ void App::saveDecks() {
 
         for (int i = 0; i < deck->getSize(); i++) {
             Card* card = deck->getCard(i);
-            fprintf(file, "\n!CARD \n");
+            fprintf(file, "\n!CARD\n");
+
             char frontTitle[MAX_CARD_INPUT_LEN+1] = {0};
             char backTitle[MAX_CARD_INPUT_LEN+1] = {0};
             int frontTitleLen = card->getFrontTitleLength();
             int backTitleLen = card->getBackTitleLength();
             int frontSubtitleLen = card->getFrontSubtitleLength();
             int backSubtitleLen = card->getBackSubtitleLength();
+
             strncpy(frontTitle, card->getFrontTitle(), (size_t)frontTitleLen);
             App::replaceCharInString(frontTitle, ' ', '_');
             strncpy(backTitle, card->getFrontTitle(), (size_t)backTitleLen);
             App::replaceCharInString(backTitle, ' ', '_');
             fprintf(file, "$FRONT-T %s\n", frontTitle);
             fprintf(file, "$BACK-T %s\n", backTitle);
+
             if (frontSubtitleLen > 0) {
                 char frontSubtitle[MAX_CARD_INPUT_LEN+1] = {0};
                 strncpy(frontSubtitle, card->getFrontSubtitle(), (size_t)frontSubtitleLen);
                 App::replaceCharInString(frontSubtitle, ' ', '_');
+                fprintf(file, "$FRONT-S %s\n", frontSubtitle);
             }
             if (backSubtitleLen > 0) {
                 char backSubtitle[MAX_CARD_INPUT_LEN+1] = {0};
                 strncpy(backSubtitle, card->getBackSubtitle(), (size_t)backSubtitleLen);
                 App::replaceCharInString(backSubtitle, ' ', '_');
+                fprintf(file, "$BACK-S %s\n", backSubtitle);
             }
         }
         fprintf(file, "\n");
-        current = current->next;
+        current = current->prev;
     }
 
     fclose(file);

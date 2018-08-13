@@ -663,6 +663,7 @@ void CardBox::render(WINDOW *window) {
             }
             if (subtitleLen > 0) {
                 int subtitleOffset = (int)floor(subtitleLen/2);
+                if (subtitleLen % 2 != 0) subtitleOffset += 1;
                 mvwaddstr(window, y+5, x+1+center-subtitleOffset, sub);
             }
         }
@@ -1095,7 +1096,7 @@ void UI::initializeCanvases() {
     C_LIST_VIEW = new Canvas(0, 4, 50, 15, 10, Colors::WHITE, Borders::MIDDLE);
     C_EDIT_VIEW = new Canvas(0, 12, 50, 7, 1, Colors::WHITE, Borders::MIDDLE);
     C_QUIZ_MODE = new Canvas(9, 7, 32, 7, 1, Colors::WHITE, Borders::FLOAT);
-    C_RESULTS = new Canvas(9, 5, 32, 11, 4, Colors::WHITE, Borders::FLOAT);
+    C_RESULTS = new Canvas(9, 5, 32, 10, 4, Colors::WHITE, Borders::FLOAT);
     top_panel(C_QUIZ_MODE->panel);
     top_panel(C_EDIT_VIEW->panel);
     top_panel(C_RESULTS->panel);
@@ -1115,7 +1116,7 @@ void UI::initializeCanvases() {
     C_RESULTS->burnText(8, 5, "Incorrect:");
     C_RESULTS->burnText(10, 6, "Skipped:");
     C_RESULTS->burnText(12, 7, "Grade:");
-    C_RESULTS->burnText(23, 9, "Finish", Colors::YELLOW_HL);
+    //C_RESULTS->burnText(23, 9, "Finish", Colors::YELLOW_HL);
 }
 
 /*
