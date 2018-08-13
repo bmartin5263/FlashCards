@@ -31,7 +31,7 @@ void UI::activateCursorForQuiz() {
     activateCursor(C_CARD_VIEW);
 }
 
-void UI::assignDeckList(DeckLinkedList *deckList) {
+void UI::injectDeckList(DeckLinkedList *deckList) {
     E_DECK_TABLE->setDeckList(deckList);
 }
 

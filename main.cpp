@@ -40,7 +40,7 @@ void App::run() {
     //getTestDeck();
 
     ui->startupInitialization();
-    ui->assignDeckList(deckList);
+    ui->injectDeckList(deckList);
     DeckLister dl(deckList);
     dl.launch();
     App::saveDecks();
@@ -250,7 +250,7 @@ void App::saveDecks() {
 
             strncpy(frontTitle, card->getFrontTitle(), (size_t)frontTitleLen);
             App::replaceCharInString(frontTitle, ' ', '_');
-            strncpy(backTitle, card->getFrontTitle(), (size_t)backTitleLen);
+            strncpy(backTitle, card->getBackTitle(), (size_t)backTitleLen);
             App::replaceCharInString(backTitle, ' ', '_');
             fprintf(file, "$FRONT-T %s\n", frontTitle);
             fprintf(file, "$BACK-T %s\n", backTitle);

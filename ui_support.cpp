@@ -11,11 +11,6 @@
 UI* UI::INSTANCE = nullptr;
 int UI::REF_COUNT = 0;
 
-//void UI::updatePanels() {
-//    update_panels();
-//    doupdate();
-//}
-
 void UI::resolveColorScheme(ColorSchemes scheme, Colors &front, Colors &back) {
     switch (scheme) {
         case ColorSchemes::BLUE:
@@ -236,12 +231,6 @@ void Canvas::burnRow(int y) {
 // Bake text onto the window. Cannot change.
 void Canvas::burnText(int x, int y, const char *text) {
     mvwaddstr(window, y, x, text);
-    wnoutrefresh(window);
-}
-
-void Canvas::burnText(int x, int y, const char *text, Colors color) {
-    mvwaddstr(window, y, x, text);
-    mvwchgat(window, y, x, (int)strlen(text), UI::getAttribute(Attributes::NORMAL), (short) UI::getPairNumber(color), nullptr);
     wnoutrefresh(window);
 }
 

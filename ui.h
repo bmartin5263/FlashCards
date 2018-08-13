@@ -73,7 +73,7 @@ public:
 
     void draw();
 
-    void assignDeckList(DeckLinkedList* deckList);
+    void injectDeckList(DeckLinkedList *deckList);
     void setDeckListIndex(int index);
     void setCardListIndex(int index);
     void setEditorIndex(int index);

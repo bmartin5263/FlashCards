@@ -79,8 +79,6 @@
 // Edit Canvas:
 #define CI_EDIT_FORM 0
 
-
-
 enum class ButtonState {
     ACTIVE, DISABLED, HIGHTLIGHTED, PRESSED, DIS_HIGHLIGHT
 };
