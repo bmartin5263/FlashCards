@@ -829,6 +829,19 @@ void DeckEditor::handleInput(int input) {
             previousField();
             setCursor();
             return;
+        case ENTER_KEY:
+            if (fieldIndex == 3) {
+                changeScheme();
+                return;
+            } else if (fieldIndex == 5) {
+                running = false;
+                returnCode = ReturnCode::NO_CHANGE;
+                return;
+            } else if (fieldIndex != 4) {
+                save();
+                return;
+            }
+            break;
         default:
             break;
     }
@@ -1028,6 +1041,14 @@ void CardEditor::handleInput(int input) {
             previousField();
             setCursor();
             return;
+        case ENTER_KEY:
+            if (fieldIndex != 5) {
+                save();
+            } else {
+                running = false;
+                returnCode = ReturnCode::NO_CHANGE;
+            }
+            return;
         default:
             break;
     }
@@ -1211,6 +1232,7 @@ void DeckQuiz::launch() {
         handleInput(input);
     }
 
+    ui->setDeckPosition(-1);
     ui->openQuizResults();
     ui->setQuizResults(correct, incorrect, skipped, deckSize);
     ui->draw();
@@ -1377,6 +1399,7 @@ void DeckQuiz::nextCard() {
                 buttonPointer = BI_LEFT_ARROW;
             }
             ui->resetInputField();
+            ui->setInputFieldText(inputField);
         } else {
             if (quizResults[cardIndex] == Results::WRONG) {
                 ui->setInputFieldIncorrect();
@@ -1440,7 +1463,6 @@ void DeckQuiz::answer() {
             quizResults[nextCardToAnswer++] = Results::RIGHT;
             correct++;
         } else {
-            beep();
             ui->setInputFieldIncorrect();
             quizResults[nextCardToAnswer++] = Results::WRONG;
             incorrect++;

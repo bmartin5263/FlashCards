@@ -88,7 +88,6 @@ public:
 class DeckLinkedList {
 
 public:
-
     DeckLinkedList();
     ~DeckLinkedList();
 

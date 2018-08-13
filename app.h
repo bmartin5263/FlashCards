@@ -13,6 +13,7 @@ class App {
 public:
 
     static bool isValidInput(int input);
+    static void replaceCharInString(char* string, char find, char replace);
     static bool appIsRunning;
 
     App();
@@ -21,6 +22,8 @@ public:
     ~App();
 
     void run();
+    void readDecks();
+    void saveDecks();
 
 private:
     void getTestDeck();

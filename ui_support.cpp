@@ -1177,7 +1177,7 @@ void UI::initializeElements()
     E_MODIFY_DECK_BUTTON = new Button(32, 4, ODD_BUTTON_LEN, "Modify Deck", 11, Colors::WHITE, 0);
     E_ADD_CARD_BUTTON = new Button(16, 1, EVEN_BUTTON_LEN, "Add Card", 8, Colors::WHITE, 0);
     E_DELETE_BUTTON  = new Button(16, 4, EVEN_BUTTON_LEN, "Delete", 6, Colors::WHITE, 0);
-    E_CARD_VIEW_BUTTON  = new Button(32, 4, ODD_BUTTON_LEN, "Card View", 9, Colors::WHITE, 0);
+    E_CARD_VIEW_BUTTON  = new Button(32, 4, ODD_BUTTON_LEN, "Card View", 9, Colors::WHITE, 5);
     E_DELETE_DECK_BUTTON = new Button(32, 1, ODD_BUTTON_LEN, "Delete Deck", 11, Colors::WHITE, 0);
     E_EDIT_DECK_BUTTON = new Button(32, 4, ODD_BUTTON_LEN, "Edit Deck", 9, Colors::WHITE, 0);
     E_NEW_DECK_BUTTON = new Button(16, 1, EVEN_BUTTON_LEN, "New Deck", 8, Colors::WHITE, 0);
