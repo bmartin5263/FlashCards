@@ -832,24 +832,27 @@ void CardTable::render(WINDOW *window) {
                 mvwaddstr(window, y+1, x, "Press 'Add Card' To Create Flash Cards");
                 wattroff(window, UI::getColorPair(Colors::GRAY));
             } else {
-                for (int i = 0; i < size && i < height; i++) {
+                int offset = (int)floor(cardIndex / height);
+                int index = 0;
+                for (int i = height*offset; i < size && index < height; i++) {
                     Card* card = deck->getCard(i);
                     char* frontTitle = card->getFrontTitle();
                     char* backTitle = card->getBackTitle();
                     int frontLen = card->getFrontTitleLength();
                     int backLen = card->getBackTitleLength();
-                    mvwaddnstr(window, y+i, x, frontTitle, CARD_TABLE_COLUMN_LEN);
+                    mvwaddnstr(window, y+index, x, frontTitle, CARD_TABLE_COLUMN_LEN);
                     if (frontLen > CARD_TABLE_COLUMN_LEN) {
-                        mvwaddnstr(window, y + i, x + CARD_TABLE_COLUMN_LEN - 1, "-", 1);
+                        mvwaddnstr(window, y + index, x + CARD_TABLE_COLUMN_LEN - 1, "-", 1);
                     }
-                    mvwaddnstr(window, y+i, x+CARD_TABLE_COLUMN_LEN+2, backTitle, CARD_TABLE_COLUMN_LEN);
+                    mvwaddnstr(window, y + index, x+CARD_TABLE_COLUMN_LEN+2, backTitle, CARD_TABLE_COLUMN_LEN);
                     if (backLen > CARD_TABLE_COLUMN_LEN) {
-                        mvwaddnstr(window, y + i, x + CARD_TABLE_COLUMN_LEN+CARD_TABLE_COLUMN_LEN+1, "-",
+                        mvwaddnstr(window, y + index, x + CARD_TABLE_COLUMN_LEN+CARD_TABLE_COLUMN_LEN+1, "-",
                                    1);
                     }
-                    if (cardIndex == i) {
-                        mvwchgat(window, y+i, x, length, UI::getAttribute(Attributes::NORMAL), (short) UI::getPairNumber(Colors::WHITE_HL), nullptr);
+                    if (cardIndex % height == index) {
+                        mvwchgat(window, y+index, x, length, UI::getAttribute(Attributes::NORMAL), (short) UI::getPairNumber(Colors::WHITE_HL), nullptr);
                     }
+                    index++;
                 }
             }
         }

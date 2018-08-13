@@ -626,7 +626,9 @@ void CardLister::newCard() {
             newCard->setBackSubtitle(ce.getBackSubtitle());
             newCard->setFrontSubtitle(ce.getFrontSubtitle());
             deck->addCard(newCard);
-            ui->injectCurrentDeck(deck);
+            ui->injectCurrentDeck(deck);    // updates size info
+            cardIndex++;
+            ui->setCardListIndex(cardIndex);
         }
         creatingCard = false;
         updateButtonStates();
@@ -695,6 +697,9 @@ void CardLister::updateButtonStates() {
         buttonMap[BI_RIGHT_ARROW] = ButtonState::DISABLED;
         buttonMap[BI_EDIT] = ButtonState::DISABLED;
         buttonMap[BI_DELETE] = ButtonState::DISABLED;
+    }
+    if (deck->getSize() == MAX_CARDS) {
+        buttonMap[BI_ADD_CARD] = ButtonState::DISABLED;
     }
     if (buttonMap[buttonPointer] == ButtonState::DISABLED) {
         buttonMap[buttonPointer] = ButtonState::DIS_HIGHLIGHT;

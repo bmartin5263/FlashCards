@@ -133,6 +133,7 @@ int Deck::getSize() {
 }
 
 void Deck::addCard(Card *card) {
+    assert(size < MAX_CARDS);
     cards[size++] = card;
 }
 
