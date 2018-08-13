@@ -751,10 +751,16 @@ void DeckTable::render(WINDOW *window) {
                 mvwchgat(window, y, x, 48, UI::getAttribute(Attributes::NORMAL), (short) UI::getPairNumber(Colors::GRAY), nullptr);
                 mvwchgat(window, y+1, x, 48, UI::getAttribute(Attributes::NORMAL), (short) UI::getPairNumber(Colors::GRAY), nullptr);
             } else {
+                int offset = (int)floor(deckIndex / height);
+                if (offset > 0) {
+                    for (int i = 0; i < height*offset; i++) {
+                        current = current->next;
+                    }
+                }
                 int index = 0;
                 for (int i = y; i < y + height; i++) {
                     mvwaddstr(window, i, x, current->deck->getName());
-                    if (deckIndex == index) {
+                    if (deckIndex % height == index) {
                         mvwchgat(window, i, x, length, UI::getAttribute(Attributes::NORMAL), (short) UI::getPairNumber(Colors::WHITE_HL), nullptr);
                     }
                     current = current->next;
